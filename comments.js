@@ -61,4 +61,47 @@ app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
 
+// Path: data.js
+// data
+
+module.exports = {
+  comments: [
+    {
+      id: 1,
+      name: "John",
+      comment: "This is a comment",
+    },
+    {
+      id: 2,
+      name: "Jane",
+      comment: "This is another comment",
+    },
+    {
+      id: 3,
+      name: "Jack",
+      comment: "This is yet another comment",
+    },
+  ],
+};
+
+// Path: index.js
+// entry point
+
+const express = require("express");
+const app = express();
+const PORT = 3000;
+
+// middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// routes
+app.use("/api/comments", require("./comments"));
+
+// listen on port 3000
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
+});
+
+
 
