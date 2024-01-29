@@ -1,107 +1,47 @@
 // create web server
-
-const express = require("express");
+// 1. import express
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const bodyParser = require('body-parser');
+// 2. create web server
 const app = express();
-const PORT = 3000;
-const { comments } = require("./data");
-
-// middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-// GET request
-app.get("/api/comments", (req, res) => {
-  res.status(200).json(comments);
+// 3. set port
+const port = 3000;
+// 4. set template engine
+app.set('view engine', 'ejs');
+// 5. set template folder
+app.set('views', './views');
+// 6. set static folder
+app.use(express.static('public'));
+// 7. set body parser
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+// 8. set router
+app.get('/', (req, res) => {
+  res.render('index');
 });
 
-// POST request
-app.post("/api/comments", (req, res) => {
-  const { body } = req;
-  if (body.name && body.comment) {
-    const newComment = {
-      id: comments.length + 1,
-      name: body.name,
-      comment: body.comment,
-    };
-    comments.push(newComment);
-    res.status(201).json(newComment);
-  } else {
-    res.status(400).json({ msg: "Please enter name and comment" });
-  }
+app.get('/comments', (req, res) => {
+  // 1. get data from file
+  const comments = JSON.parse(fs.readFileSync(path.join(__dirname, 'comments.json'), 'utf8'));
+  // 2. render data to view
+  res.render('comments', { comments });
 });
 
-// PUT request
-app.put("/api/comments/:id", (req, res) => {
-  const { id } = req.params;
-  const { body } = req;
-  const comment = comments.find((comment) => comment.id === Number(id));
-  if (comment) {
-    const index = comments.indexOf(comment);
-    comments[index] = { ...comment, ...body };
-    res.status(200).json(comments[index]);
-  } else {
-    res.status(404).json({ msg: `Comment not found with id of ${id}` });
-  }
+app.post('/comments', (req, res) => {
+  // 1. get data from request
+  const { name, comment } = req.body;
+  // 2. get data from file
+  const comments = JSON.parse(fs.readFileSync(path.join(__dirname, 'comments.json'), 'utf8'));
+  // 3. add new data to file
+  comments.push({ name, comment });
+  fs.writeFileSync(path.join(__dirname, 'comments.json'), JSON.stringify(comments));
+  // 4. redirect to comments page
+  res.redirect('/comments');
 });
 
-// DELETE request
-app.delete("/api/comments/:id", (req, res) => {
-  const { id } = req.params;
-  const comment = comments.find((comment) => comment.id === Number(id));
-  if (comment) {
-    comments = comments.filter((comment) => comment.id !== Number(id));
-    res.status(200).json({ msg: `Comment deleted with id of ${id}` });
-  } else {
-    res.status(404).json({ msg: `Comment not found with id of ${id}` });
-  }
+// 9. start server
+app.listen(port, () => {
+  console.log('Server is listening at port ' + port);
 });
-
-// listen on port 3000
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
-});
-
-// Path: data.js
-// data
-
-module.exports = {
-  comments: [
-    {
-      id: 1,
-      name: "John",
-      comment: "This is a comment",
-    },
-    {
-      id: 2,
-      name: "Jane",
-      comment: "This is another comment",
-    },
-    {
-      id: 3,
-      name: "Jack",
-      comment: "This is yet another comment",
-    },
-  ],
-};
-
-// Path: index.js
-// entry point
-
-const express = require("express");
-const app = express();
-const PORT = 3000;
-
-// middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-// routes
-app.use("/api/comments", require("./comments"));
-
-// listen on port 3000
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
-});
-
-
-
